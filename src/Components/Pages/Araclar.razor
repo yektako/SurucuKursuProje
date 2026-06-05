@@ -1,0 +1,113 @@
+﻿@page "/araclar"
+@rendermode InteractiveServer
+
+<PageTitle>Araçlar</PageTitle>
+
+<h1>Araçlar</h1>
+
+@if (araclar.Count == 0) {
+    <p>Yükleniyor...</p>
+}
+else {
+    <p>Araç sayısı: @araclar.Count</p>
+}
+
+<p>
+    Sütuna göre sırala:
+    <select @bind="SeciliSutun" @bind:after="VerileriGoster">
+        <option value="" selected>Seçim yapın...</option>
+        <option value="AracID">ID</option>
+        <option value="Plaka">Plaka</option>
+        <option value="Marka">Marka</option>
+        <option value="AracModeli">Model</option>
+        <option value="Yil">Yıl</option>
+        <option value="VitesCesidi">Vites</option>
+        <option value="SertifikaSinifi">Sertifika Sınıfı</option>
+        <option value="AracKilometresi">Kilometre</option>
+    </select>
+    @if (SeciliSutun != "") {<text>
+    Şu sırada sırala:
+    <select @bind="AzalanSira" @bind:after="VerileriGoster">
+        <option value="false" selected>Artan</option>
+        <option value="true">Azalan</option>
+    </select>
+    </text>}
+</p>
+<div class="message">
+    @mesaj
+</div>
+
+<table>
+    <thead>
+        <th>ID</th>
+        <th>Plaka</th>
+        <th>Marka</th>
+        <th>Model</th>
+        <th>Yıl</th>
+        <th>Vites</th>
+        <th>Sertifika Sınıfı</th>
+        <th>Kilometre</th>
+        <th colspan="2"></th>
+    </thead>
+    <tbody>
+        @foreach (var arac in araclar)
+        {
+            <tr>
+                <td>@arac.AracID</td>
+                <td>@arac.Plaka</td>
+                <td>@arac.Marka</td>
+                <td>@arac.AracModeli</td>
+                <td>@arac.Yil</td>
+                <td>@arac.VitesCesidi</td>
+                <td>@arac.SertifikaSinifi</td>
+                <td>@arac.AracKilometresi</td>
+                <td><a class="remove" @onclick="() => VeriyiSil(arac.AracID)">❌</a></td>
+                <td><a class="update">✏️</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private string SeciliSutun {get; set;} = "";
+    private string AzalanSira {get; set;} = "false";
+    private string mesaj = " ";
+    List<Models.Araclar> araclar = new List<Models.Araclar>();
+    private async Task VerileriGoster()
+    {
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+
+        if (SeciliSutun == "")
+            araclar = await db.Araclar.ToListAsync();
+        else if (bool.Parse(AzalanSira))
+            araclar = await db.Araclar.OrderByDescending(a => EF.Property<object>(a, SeciliSutun)).ToListAsync();
+        else
+            araclar = await db.Araclar.OrderBy(a => EF.Property<object>(a, SeciliSutun)).ToListAsync();
+    }
+    private async Task VeriyiSil(object id)
+    {
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var arac = db.Araclar.Find(Convert.ToInt32(id));
+        if (arac is not null)
+        {
+            mesaj = " ";
+            try
+            {
+                db.Araclar.Remove(arac);
+                await db.SaveChangesAsync();
+                mesaj = $"{arac.Plaka} plakalı araç silindi";
+            }
+            catch (Exception ex)
+            {
+                mesaj = ex.InnerException?.Message ?? "Bir hata meydana geldi";
+            }
+        }
+        else mesaj = $"{id} numaralı araç bulunamadı";
+        
+        await VerileriGoster();
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await VerileriGoster();
+    }
+}

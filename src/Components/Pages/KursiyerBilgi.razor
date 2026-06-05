@@ -1,0 +1,109 @@
+﻿@page "/kursiyer"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+<PageTitle>Kursiyer Bilgisi</PageTitle>
+
+<h1>Kursiyer Bilgisi</h1>
+
+<div class="message">
+    @mesaj
+</div>
+
+<div style="padding-bottom: 20px;">
+    TCKN: <input type="text" maxlength="11" @bind="TCKN" @bind:after="() => BilgiGuncelle()" />
+</div>
+
+<div class="info">
+    <div style="align-self: start; max-width: 20%; padding-right:30px">
+        @if (kursiyer.KursiyerID > 0) {
+            <div class="avatar">
+                <img src="avatar.png" width="100%" height="100%"/>
+            </div>
+            <div style="text-align: center; padding: 15px 15px;">
+                @kursiyer.Ad @kursiyer.Soyad
+            </div>
+            <div style="text-align: center; padding-top:30px">
+                <button class="btn" @onclick="() => KursiyeriSil()">Kursiyeri sil</button><br />
+                <button class="btn" @onclick="() => KursiyeriGuncelle()">Kursiyeri güncelle</button><br />
+                <button class="btn">Sınav planla</button><br />
+            </div>
+        }
+    </div>
+    <table>
+        @foreach (PropertyInfo prop in kursiyer.GetType().GetProperties()) {
+            string deger = (prop.GetValue(kursiyer) ?? "").ToString() ?? "";
+            <tr>
+                <td>
+                    @Sozluk.Donustur(prop.Name)
+                </td>
+                <td>
+                    @if (kursiyer.KursiyerID != 0) {
+                        @Sozluk.Donustur(deger)
+                    }
+                </td>
+            </tr>
+        }
+    </table>
+</div>
+
+
+@code {
+    private string mesaj = "";
+    private string TCKN = "";
+    private KursiyerTumBilgiler kursiyer = new KursiyerTumBilgiler();
+    private void KursiyerAra(string tckn)
+    {
+        mesaj = tckn + " aranıyor";
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var query = db.KursiyerTumBilgiler.FromSql(
+            $"SELECT * FROM KursiyerTumBilgiler AS K WHERE K.TCKN = {tckn}");
+        if (query.Count() > 0) 
+        {
+            kursiyer = query.First();
+            mesaj = $"{tckn} kimlik numaralı {kursiyer.Ad} {kursiyer.Soyad} kaydı görüntüleniyor";
+        }
+        else mesaj = $"{tckn} kimlik numaralı bir kursiyer kaydı yok";
+    }
+    private void KursiyerAra(int id)
+    {
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var query = db.KursiyerTumBilgiler.FromSql(
+            $"SELECT * FROM KursiyerTumBilgiler AS K WHERE K.KursiyerID = {id}");
+        if (query.Count() > 0) kursiyer = query.First();
+    }
+    private async Task KursiyeriSil()
+    {
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var silinecek = db.Kursiyerler.Find(kursiyer.KursiyerID);
+        if (silinecek is not null)
+        {
+            db.Kursiyerler.Remove(silinecek);
+            await db.SaveChangesAsync();
+            mesaj =  $"{kursiyer.Ad} {kursiyer.Soyad} isimli kursiyerin kaydı silindi";
+            kursiyer = new KursiyerTumBilgiler();
+        }
+    }
+    private async Task KursiyeriGuncelle()
+    {
+        int id = Convert.ToInt32( Navigation.Uri.Split("#").Last() );
+        string uri = Navigation.BaseUri+"kursiyer-ekle#"+id;
+        Navigation.NavigateTo(uri);
+    }
+    private void BilgiGuncelle()
+    {
+        if (TCKN.Length == 11)
+        {
+            KursiyerAra(TCKN);
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        string uri = Navigation.Uri;
+        if (uri.Contains("#") && uri.IndexOf("#") < uri.Length-1)
+        {
+            int id = Convert.ToInt32( Navigation.Uri.Split("#").Last() );
+            KursiyerAra(id);
+        }
+    }
+}

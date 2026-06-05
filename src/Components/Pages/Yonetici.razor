@@ -1,0 +1,112 @@
+@page "/"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+<PageTitle>Yönetici Paneli</PageTitle>
+
+<h1>@baslik</h1>
+
+<div class="message">
+    @mesaj
+</div>
+
+<table>
+    <thead>
+        <tr>
+            @for (int i=0; i<sutunlar.Count; i++) {
+                <th>@Sozluk.Donustur(sutunlar[i].Name)</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (object satir in satirlar) {
+            <tr>
+                @foreach (PropertyInfo sutun in sutunlar) {
+                    string deger = (sutun.GetValue(satir) ?? "").ToString() ?? "";
+                    <td>
+                        @if (sutun.Name=="KursiyerID") {
+                            <a class="id" href=@($"kursiyer#{deger}")>
+                                @Sozluk.Donustur(deger)
+                            </a>
+                        }
+                        else if (sutun.Name=="EgitmenID") {
+                            <a class="id" href=@($"egitmen#{deger}")>
+                                @Sozluk.Donustur(deger)
+                            </a>
+                        }
+                        else {
+                            @Sozluk.Donustur(deger)
+                        }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<object> satirlar = new List<object>();
+    private List<PropertyInfo> sutunlar = new List<PropertyInfo>();
+    private string mesaj = "";
+    private string baslik = "";
+    private async Task TabloGoster(int index)
+    {
+        string isim = Sozluk.Tablolar[index];
+        string gorunenIsim = Sozluk.TabloIsimleri[index];
+        mesaj = "Yükleniyor...";
+        baslik = gorunenIsim;
+        sutunlar.Clear();
+        satirlar.Clear();
+
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+
+        IEnumerable<object>? objects = Enumerable.Empty<object>();
+        
+        try
+        {
+            if (isim == "KursiyerTumBilgiler") objects = await db.KursiyerTumBilgiler.ToListAsync();
+            if (isim == "AktifKursiyerler") objects = await db.AktifKursiyerler.ToListAsync();
+            if (isim == "BitirenKursiyerler") objects = await db.BitirenKursiyerler.ToListAsync();
+            if (isim == "HarcOdemeleri") objects = await db.HarcOdemeleri.ToListAsync();
+            else if (isim == "HarcDurumlari") objects = await db.HarcDurumlari.ToListAsync();
+            else if (isim == "SonOdemeler") objects = await db.SonOdemeler.ToListAsync();
+            else if (isim == "SonSinavlar") objects = await db.SonSinavlar.ToListAsync();
+            else if (isim == "MaasOdemeleriniGoster") objects = await db.MaasOdemeleriniGoster.ToListAsync();
+            else if (isim == "EgitmenleriGoster") objects = await db.EgitmenleriGoster.ToListAsync();
+            else if (isim == "KursUcretleri") objects = await db.KursUcretleri.ToListAsync();
+            
+        }
+        catch (Exception ex)
+        {
+            if (ex.InnerException is not null) mesaj = ex.InnerException.Message;
+            else mesaj = "Bilinmeyen hata";
+        }
+
+        if (objects.Count() > 0)
+        {
+            Type type = objects.First().GetType();
+            PropertyInfo[] properties = type.GetProperties();
+
+            sutunlar = properties.ToList();
+
+            foreach (object obj in objects)
+                satirlar.Add(obj);
+            
+            mesaj = satirlar.Count + " adet satır görüntüleniyor";
+        }
+        else
+        {
+            mesaj = $"{isim} isimli tabloda veri bulunamadı";
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        string uri = Navigation.Uri;
+        if (uri.Contains("#") && uri.IndexOf("#") < uri.Length-1)
+        {
+            int index = Convert.ToInt32(Navigation.Uri.Split("#").Last());
+            await TabloGoster(index);
+        }
+    }
+    
+}

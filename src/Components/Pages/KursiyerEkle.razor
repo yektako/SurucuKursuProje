@@ -1,0 +1,132 @@
+﻿@page "/kursiyer-ekle"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+<PageTitle>Kursiyer Ekle</PageTitle>
+
+@if (degistir) {
+    <h1>Kursiyer Güncelle</h1>
+}
+else {
+    <h1>Kursiyer Ekle</h1>
+}
+
+
+<div class="message">
+    @mesaj
+</div>
+
+<form method="post" @onsubmit="EkleVeyaDegistir" >
+    <div>
+        Ad: <input type="text" maxlength="50" @bind="Ad" required/>
+    </div>
+    <div>
+        Soyad: <input type="text" maxlength="50" @bind="Soyad" required/>
+    </div>
+    <div>
+        Sınıf: <select @bind="SertifikaSinifi" required>
+            <option value="A" selected>A</option>
+            <option value="A1">A1</option>
+            <option value="A2">A2</option>
+            <option value="B">B</option>
+            <option value="B1">B1</option>
+            <option value="C">C</option>
+            <option value="C1">C1</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+        </select>
+    </div>
+    <div>
+        TCKN: <input type="text" maxlength="11" @bind="TCKN" required/>
+    </div>
+    <div>
+        Doğum tarihi: <input type="date" @bind="DogumTarihi" required>
+    </div>
+    <button type="submit" class="btn">
+        @if (degistir) {<text>
+            Kursiyeri güncelle
+        </text>}
+        else {<text>
+            Yeni kursiyer ekle
+        </text>}
+    </button>
+</form>
+
+@code {
+    private string Ad = "";
+    private string Soyad = "";
+    private string SertifikaSinifi = "";
+    private string TCKN = "";
+    private DateOnly DogumTarihi = new DateOnly(2000,1,1);
+    private string mesaj = "Eklenecek kursiyerin bilgilerini giriniz";
+    private bool degistir = false;
+    private async Task EkleVeyaDegistir()
+    {
+        if (degistir) await KursiyerDegistir();
+        else await YeniKursiyerEkle();
+    }
+    private async Task YeniKursiyerEkle()
+    {
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var yeniKursiyer = new Models.Kursiyerler
+        {
+            Ad = Ad,
+            Soyad = Soyad,
+            SertifikaSinifi = SertifikaSinifi,
+            TCKN = TCKN,
+            DogumTarihi = DogumTarihi,
+        };
+        try
+        {
+            mesaj = "Kursiyer ekleniyor...";
+            db.Kursiyerler.Add(yeniKursiyer);
+            await db.SaveChangesAsync();
+            mesaj = "Yeni kursiyer başarıyla eklendi";
+        }
+        catch (Exception ex)
+        {
+            mesaj = ex.InnerException?.Message ?? "Bir hata meydana geldi";
+        }
+    }
+    private async Task KursiyerDegistir()
+    {
+        int id = Convert.ToInt32( Navigation.Uri.Split("#").Last() );
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var kursiyer = await db.Kursiyerler.FindAsync(id);
+        if (kursiyer is not null)
+        {
+            kursiyer.Ad = Ad;
+            kursiyer.Soyad = Soyad;
+            kursiyer.SertifikaSinifi = SertifikaSinifi;
+            kursiyer.TCKN = TCKN;
+            kursiyer.DogumTarihi = DogumTarihi;
+            db.Kursiyerler.Update(kursiyer);
+            await db.SaveChangesAsync();
+            mesaj = $"{kursiyer.Ad} {kursiyer.Soyad} isimli kursiyer güncellendi";
+        }
+        else mesaj = $"{id} numaralı kursiyer bulunamadı";
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        string uri = Navigation.Uri;
+        if (uri.Contains("#") && uri.IndexOf("#") < uri.Length-1)
+        {
+            int id = Convert.ToInt32( Navigation.Uri.Split("#").Last() );
+            using SurucuKursuContext db = DbFactory.CreateDbContext();
+            var query = db.Kursiyerler.FromSql(
+                $"SELECT * FROM Kursiyerler AS K WHERE K.KursiyerID = {id}"
+            );
+            if (query.Count() > 0)
+            {
+                var kursiyer = query.First();
+                Ad = kursiyer.Ad;
+                Soyad = kursiyer.Soyad;
+                SertifikaSinifi = kursiyer.SertifikaSinifi;
+                TCKN = kursiyer.TCKN;
+                DogumTarihi = kursiyer.DogumTarihi;
+                degistir = true;
+            }
+            mesaj = "Kursiyerin yeni bilgilerini giriniz";
+        }
+    }
+}

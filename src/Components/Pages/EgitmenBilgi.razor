@@ -1,0 +1,103 @@
+﻿@page "/egitmen"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+<PageTitle>Eğitmen Bilgisi</PageTitle>
+
+<h1>Eğitmen Bilgisi</h1>
+
+<div class="message">
+    @mesaj
+</div>
+
+<div style="padding-bottom: 20px;">
+    Eğitmen ID: <input type="text" maxlength="11" @bind="EgitmenID" @bind:after="() => EgitmenAra()" />
+</div>
+
+<div class="info">
+    <div style="align-self: start; max-width: 20%; padding-right:30px">
+        @if (egitmen.EgitmenID > 0) {
+            <div class="avatar">
+                <img src="avatar.png" width="100%" height="100%"/>
+            </div>
+            <div style="text-align: center; padding: 15px 15px;">
+                @egitmen.Ad @egitmen.Soyad
+            </div>
+            <div style="text-align: center; padding-top:30px">
+                <button class="btn" @onclick="() => EgitmeniSil()">Eğitmeni sil</button>
+            </div>
+        }
+    </div>
+    <table>
+        @foreach (PropertyInfo prop in egitmen.GetType().GetProperties()) {
+            string deger = (prop.GetValue(egitmen) ?? "").ToString() ?? "";
+            <tr>
+                <td>
+                    @Sozluk.Donustur(prop.Name)
+                </td>
+                <td>
+                    @if (egitmen.EgitmenID != 0) {
+                        @Sozluk.Donustur(deger)
+                    }
+                </td>
+            </tr>
+        }
+        
+        <tr>
+            <td>
+                Öğrettiği Sınıflar
+            </td>
+            <td>
+                @String.Join(", ",ogrettigiSiniflar)
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+@code {
+    private string mesaj = "";
+    private string EgitmenID = "";
+    private EgitmenleriGoster egitmen = new EgitmenleriGoster();
+    private List<string> ogrettigiSiniflar = new List<string>();
+    private void EgitmenAra()
+    {
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var query = db.EgitmenleriGoster.FromSql(
+            $"SELECT * FROM EgitmenleriGoster AS E WHERE E.EgitmenID = {EgitmenID}");
+        if (query.Count() > 0) 
+        {
+            egitmen = query.First();
+            var siniflar = db.EgitmenOgretirSinif.FromSql(
+            $"SELECT * FROM EgitmenOgretirSinif AS E WHERE E.EgitmenID = {EgitmenID}").ToList();
+            ogrettigiSiniflar.Clear();
+            foreach (var sinif in siniflar)
+            {
+                ogrettigiSiniflar.Add(sinif.SertifikaSinifi);
+            }
+            mesaj = $"{EgitmenID} numaralı {egitmen.Ad} {egitmen.Soyad} kaydı görüntüleniyor";
+        }
+        else mesaj = $"{EgitmenID} numaralı bir eğitmen yok";
+    }
+    private async Task EgitmeniSil()
+    {
+        using SurucuKursuContext db = DbFactory.CreateDbContext();
+        var silinecek = db.Egitmenler.Find(egitmen.EgitmenID);
+        if (silinecek is not null)
+        {
+            db.Egitmenler.Remove(silinecek);
+            await db.SaveChangesAsync();
+            mesaj =  $"{egitmen.Ad} {egitmen.Soyad} isimli eğitmenin kaydı silindi";
+            egitmen = new EgitmenleriGoster();
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        string uri = Navigation.Uri;
+        if (uri.Contains("#") && uri.IndexOf("#") < uri.Length-1)
+        {
+            EgitmenID = Navigation.Uri.Split("#").Last();
+            EgitmenAra();
+        }
+    }
+}

@@ -1,0 +1,42 @@
+﻿<div>
+    <nav>
+        <div class="nav-item">
+            <div style="font-size: 1vw; font-family: system-ui; text-align:center">
+                Sürücü Kursu
+            </div>
+        </div>
+
+        <NavLink ActiveClass="nav-active" href="">
+            <div class="nav-item">Yönetici Paneli</div>
+        </NavLink>
+
+        <NavLink ActiveClass="nav-active" href="kursiyer">
+            <div class="nav-item">Kursiyer Bilgisi</div>
+        </NavLink>
+
+        <NavLink ActiveClass="nav-active" href="kursiyer-ekle">
+            <div class="nav-item">Kursiyer Ekle</div>
+        </NavLink>
+
+        @for (int i=0; i<Sozluk.Tablolar.Length; i++) {
+            int index = i;
+            <NavLink class="nav-link" href=@("goster#"+index)>
+                <div class="nav-item">
+                    @Sozluk.TabloIsimleri[index]
+                </div>
+            </NavLink>
+        }
+
+        <NavLink ActiveClass="nav-active" href="egitmen">
+            <div class="nav-item">Eğitmen Bilgisi</div>
+        </NavLink>
+
+        <NavLink ActiveClass="nav-active" href="araclar">
+            <div class="nav-item">Araç Envanteri</div>
+        </NavLink>
+
+        <NavLink ActiveClass="nav-active" href="aracekle">
+            <div class="nav-item">Araç Ekle</div>
+        </NavLink>
+    </nav>
+</div>

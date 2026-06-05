@@ -1,0 +1,14 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<div class="page">
+    <div class="sidebar">
+        <YoneticiMenu />
+    </div>
+    
+    <main>
+        <article class="content">
+            @Body
+        </article>
+    </main>
+</div>

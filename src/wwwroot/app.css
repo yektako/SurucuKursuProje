@@ -1,0 +1,136 @@
+html, body {
+    font-family: "Verdana", "Carlito", sans-serif;
+    background-image: linear-gradient(#c2d9ff, #66abd3);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-attachment: fixed;
+}
+
+.remove, .update {
+    visibility: hidden;
+    background-color: transparent;
+}
+tr:hover .remove {
+    visibility: visible;
+    color: #062b46;
+    cursor: pointer;
+}
+tr:hover .update {
+    visibility: visible;
+    cursor: pointer;
+}
+
+.message {
+    min-height: 2vh;
+    padding: 2vh 1vh;
+}
+
+a, .btn-link {
+    color: #030f36;
+}
+
+table {
+    border-collapse: collapse;
+    border-bottom-style: solid;
+    border-color: #020f38b4;
+    box-shadow: 5px 5px 8px #242424;
+    padding-top: 4vh;
+    text-wrap: nowrap;
+}
+
+th {
+    border-style: inset;
+    border-width: medium;
+    padding: 4px;
+}
+
+td {
+    padding: 15px;
+}
+tbody td {
+    padding: 10px 15px 10px 15px;
+}
+
+tr {
+    background-color: #ffffff;
+    border-color: #04113daf;
+    border-left-style: solid;
+    border-right-style: solid;
+}
+
+tr:nth-child(even) {
+    background-color: #d4d4d4;
+}
+
+.selection {
+    border-right-style: solid;
+    border-left-style: solid;
+    border-bottom-style: solid;
+    border-color: #041a63b7;
+}
+.selection:hover {
+    background-color: #6ec3f58f;
+    cursor: pointer;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.btn {
+    padding: 15px 15px;
+}
+
+.page {
+    display: flex;
+    justify-content: left;
+}
+
+.content {
+    padding-left: 5vw;
+    padding-top: 0.5vw;
+}
+
+.sidebar {
+    background-image: linear-gradient(#7589ff,#545ee6);
+    max-width: 13vw;
+    flex-shrink: 0;
+    border-radius: 1.5vh;
+    height: 100%;
+    overflow: hidden;
+}
+
+.nav-item {
+    font-size: 1.1vw;
+    padding: 0.6vw 1vw 0.6vw 1vw;
+}
+.nav-item:hover {
+    background-color: #c2d9ff67;
+}
+.nav-item .nav-active {
+    background-color: #a1ffffab;
+}
+
+.avatar {
+    text-align: center;
+    background-image: linear-gradient(#ffffffa8, #5f5f5fe3);
+}
+
+.info {
+    display: flex;
+    align-items: center;
+}
+
+.home {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 80vw;
+    height: 80vh;
+}
+
+.id:hover {
+    background-color: #a1ffffab;
+}
