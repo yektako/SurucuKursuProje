@@ -76,6 +76,7 @@ public partial class HarcOdemeleri
 ## Örnek Görseller
 <img src="gorseller/1.png" width="70%" />
 <img src="gorseller/2.png" width="70%" />
+<img src="gorseller/3.png" width="70%" />
 
 ## Kaynaklar
 * https://dotnet.microsoft.com/en-us/learn/aspnet/blazor-tutorial/intro
